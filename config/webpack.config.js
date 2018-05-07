@@ -18,7 +18,7 @@ const config = (env) => {
     devServer: {
       hot: true,
       open: true,
-      port: 3005,
+      port: 3000,
       historyApiFallback: true,
       openPage: '',
     },
