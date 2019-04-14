@@ -1,5 +1,6 @@
 const webpack = require('webpack');
 const colors = require('colors');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ROOT_PATH = path.resolve(__dirname, "..");
@@ -10,11 +11,18 @@ const APP_DIR = path.resolve(ROOT_PATH, 'src');
 const config = (env) => {
 
   const prod = env && env.prod ? true : false;
+  const analyze = env && env.analyze;
 
-  console.log(`Building in ${prod ? 'PRODUCTION'.yellow : 'DEVELOPMENT'.cyan} mode...`);  
+  if (analyze) {
+    console.log("Analyzing...".bgGreen);
+  }
+  else {
+    console.log(`Building in ${prod ? 'PRODUCTION'.yellow : 'DEVELOPMENT'.cyan} mode...`);
+  }
+
 
   return {
-    devtool: (prod ? 'source-map' : 'inline-source-map'),
+    devtool: (prod ? undefined : 'inline-source-map'),
     devServer: {
       hot: true,
       open: true,
@@ -22,7 +30,7 @@ const config = (env) => {
       historyApiFallback: true,
       openPage: '',
     },
-    entry: ['babel-polyfill', APP_DIR + '/index.tsx'],
+    entry: ['babel-polyfill', path.resolve(APP_DIR, 'index.tsx')],
     output: {
       path: BUILD_DIR,
       filename: 'bundle.js'
@@ -49,8 +57,14 @@ const config = (env) => {
       new HtmlWebpackPlugin(
         {
           template: path.resolve(CONFIG_DIR, 'index_template.html'),
-          title: 'react-redux-typescript-starter'
-        })
+          title: 'React App'
+        }),
+
+      (prod && analyze ?
+        new BundleAnalyzerPlugin()
+        :
+        new webpack.DefinePlugin({})
+      )
 
     ],
     module: {
@@ -82,7 +96,7 @@ const config = (env) => {
           test: /\.(sass|scss)$/,
           use: [
             { loader: 'style' },
-            { loader: `css?modules&importLoaders=1&localIdentName=[name]__[local]___[hash:base64:5]&minimize=${prod}`},
+            { loader: `css?modules&importLoaders=1&localIdentName=[name]__[local]___[hash:base64:5]&minimize=${prod}` },
             {
               loader: 'postcss',
               options: { config: { path: path.resolve(CONFIG_DIR, 'postcss.config.js') } }
@@ -122,7 +136,10 @@ const config = (env) => {
     },
     resolve: {
       modules: [path.resolve(APP_DIR), "node_modules"],
-      extensions: ['.js', '.jsx', '.ts', '.tsx', '.sass', 'scss', 'json', 'png', 'jpg']
+      extensions: ['.js', '.jsx', '.ts', '.tsx', '.sass', 'scss', 'json', 'png', 'jpg'],
+      alias: {
+        config: path.join(CONFIG_DIR, (prod ? 'production' : 'development'))
+      }
     }
   };
 }
